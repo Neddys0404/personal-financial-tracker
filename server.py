@@ -74,8 +74,8 @@ class Handler(SimpleHTTPRequestHandler):
 
 def main():
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8321
-    httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    print("Ledger running ->  http://127.0.0.1:%d" % port)
+    httpd = ThreadingHTTPServer(("0.0.0.0", port), Handler)
+    print("Ledger running ->  http://0.0.0.0:%d" % port)
     print("Data file      ->  %s" % DATA_FILE)
     try:
         httpd.serve_forever()
