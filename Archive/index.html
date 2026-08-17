@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tally — Personal Finance</title>
+<link rel="stylesheet" href="styles.css">
+<script>
+/* Apply saved theme before first paint to avoid a flash */
+try{
+  var s = JSON.parse(localStorage.getItem('tally.settings') || '{}');
+  var t = s.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.dataset.theme = t;
+}catch(e){}
+</script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="18" height="18">
+        <rect x="5" y="12.5" width="3.4" height="6.5" rx="1" fill="currentColor"/>
+        <rect x="10.3" y="8.5" width="3.4" height="10.5" rx="1" fill="currentColor"/>
+        <rect x="15.6" y="4.5" width="3.4" height="14.5" rx="1" fill="currentColor"/>
+      </svg>
+    </span>
+    Tally <span class="brand-sub">personal finance</span>
+  </div>
+  <div class="top-actions">
+    <select id="currency" aria-label="Currency">
+      <option value="USD">USD $</option>
+      <option value="EUR">EUR €</option>
+      <option value="GBP">GBP £</option>
+      <option value="CAD">CAD $</option>
+      <option value="AUD">AUD $</option>
+      <option value="JPY">JPY ¥</option>
+      <option value="CHF">CHF ₣</option>
+      <option value="INR">INR ₹</option>
+    </select>
+    <button id="themeBtn" class="iconbtn lg" aria-label="Toggle dark mode" title="Toggle theme"></button>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- ============ sidebar: entry form ============ -->
+  <aside class="side">
+    <section class="card form-card" id="formCard">
+      <h3 id="formTitle">Add transaction</h3>
+      <form id="txForm" novalidate>
+        <div class="seg" role="radiogroup" aria-label="Transaction type">
+          <label class="opt exp active"><input type="radio" name="ftype" value="expense" checked><span>Expense</span></label>
+          <label class="opt inc"><input type="radio" name="ftype" value="income"><span>Income</span></label>
+        </div>
+
+        <div class="field">
+          <label for="inAmount">Amount</label>
+          <div class="amount-wrap">
+            <span id="curPrefix">$</span>
+            <input id="inAmount" type="number" step="any" min="0" inputmode="decimal" placeholder="0.00" aria-describedby="eAmount">
+          </div>
+          <p class="err" id="eAmount" hidden></p>
+        </div>
+
+        <div class="field">
+          <label for="inCategory">Category</label>
+          <select id="inCategory" aria-describedby="eCategory"></select>
+          <p class="err" id="eCategory" hidden></p>
+        </div>
+
+        <div class="field">
+          <label for="inDate">Date</label>
+          <input id="inDate" type="date" aria-describedby="eDate">
+          <p class="err" id="eDate" hidden></p>
+        </div>
+
+        <div class="field">
+          <label for="inNote">Note <span class="opt-label">(optional)</span></label>
+          <input id="inNote" type="text" maxlength="80" placeholder="e.g. Rent, groceries, client invoice…">
+        </div>
+
+        <div class="submit-row">
+          <button type="submit" id="submitBtn" class="btn">Add expense</button>
+          <button type="button" id="cancelEdit" class="btn ghost" hidden>Cancel</button>
+        </div>
+      </form>
+    </section>
+  </aside>
+
+  <!-- ============ content ============ -->
+  <div class="content">
+
+    <div class="period-row">
+      <span class="muted small">Period</span>
+      <div class="period-ctrl">
+        <input type="month" id="monthInput" aria-label="Filter by month" placeholder="YYYY-MM">
+        <button id="allTimeBtn" class="btn ghost active" type="button">All time</button>
+      </div>
+    </div>
+
+    <section class="cards" id="cards" aria-live="polite"></section>
+
+    <section class="card">
+      <h3>Monthly budget <span class="muted small" id="budgetMonth"></span></h3>
+      <div id="budgetBody"></div>
+    </section>
+
+    <section class="charts">
+      <div class="card">
+        <h3>Spending by category <span class="muted small" id="donutTitle"></span></h3>
+        <div id="donut"></div>
+      </div>
+      <div class="card">
+        <h3>Cash flow · last 6 months
+          <span class="tl-legend"><i class="sw in"></i>Income&nbsp;&nbsp;<i class="sw out"></i>Expenses</span>
+        </h3>
+        <div id="trend" aria-label="Income and expenses for the last six months"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Transactions</h3>
+      <div class="tx-toolbar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+          <input id="search" type="search" placeholder="Search notes, categories, amounts…" aria-label="Search transactions">
+        </div>
+        <select id="fType" aria-label="Filter by type">
+          <option value="all">All types</option>
+          <option value="income">Income</option>
+          <option value="expense">Expenses</option>
+        </select>
+        <select id="fCat" aria-label="Filter by category"></select>
+      </div>
+      <p id="txMeta" class="tx-meta muted"></p>
+      <div id="txList"></div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="foot">
+  <span>Your data never leaves this browser.</span>
+  <button id="exportBtn" class="linkbtn" type="button">Export backup</button>
+  <button id="importBtn" class="linkbtn" type="button">Import</button>
+  <input type="file" id="fileInput" accept=".json,application/json" hidden>
+  <button id="resetBtn" class="linkbtn danger" type="button">Reset all</button>
+</footer>
+
+<button id="fab" aria-label="Add transaction" title="Add transaction">
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<div id="toasts" aria-live="polite"></div>
+
+<div id="modal" class="modal-overlay" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>

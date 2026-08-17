@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "transactions": [
+    {
+      "id": "f460a3a4-2880-45e3-bff6-88d5d9237c74",
+      "type": "expense",
+      "category": "Housing",
+      "amount": 100,
+      "date": "2026-08-18",
+      "note": "",
+      "createdAt": 1786986424996
+    },
+    {
+      "id": "ae7a37c5-f78f-4d03-8371-05b01e8bd92c",
+      "type": "expense",
+      "category": "Housing",
+      "amount": 100,
+      "date": "2026-08-18",
+      "note": "",
+      "createdAt": 1786986611840
+    },
+    {
+      "id": "7259332a-bef6-4e38-bd70-93d4b235610f",
+      "type": "expense",
+      "category": "Housing",
+      "amount": 100000,
+      "date": "2026-08-18",
+      "note": "",
+      "createdAt": 1786986652215
+    },
+    {
+      "id": "a04b73ff-af6f-4c1f-97ec-0e97d8db3666",
+      "type": "expense",
+      "category": "Housing",
+      "amount": 19800,
+      "date": "2026-08-18",
+      "note": "",
+      "createdAt": 1786986677864
+    },
+    {
+      "id": "9c5bde7f-3b84-4062-ad3f-ba0f64ecf321",
+      "type": "income",
+      "category": "Salary",
+      "amount": 710000,
+      "date": "2026-08-17",
+      "note": "",
+      "createdAt": 1786987648742
+    },
+    {
+      "id": "2af4adaa-aca1-4372-85e7-01098e02fc54",
+      "type": "income",
+      "category": "Salary",
+      "amount": 610000,
+      "date": "2026-07-17",
+      "note": "",
+      "createdAt": 1786987637371
+    },
+    {
+      "id": "785415d9-05af-4df1-b11f-c7b93386a49c",
+      "type": "expense",
+      "category": "Housing",
+      "amount": 200000,
+      "date": "2026-07-18",
+      "note": "",
+      "createdAt": 1786988746834
+    },
+    {
+      "id": "4d3da8db-76b8-474a-b89f-91f252febf9b",
+      "type": "expense",
+      "category": "Dining",
+      "amount": 1500,
+      "date": "2026-08-17",
+      "note": "",
+      "createdAt": 1786988125543
+    },
+    {
+      "id": "e7fce646-7bfe-474f-9bab-c429e60b7be5",
+      "type": "expense",
+      "category": "Dating",
+      "amount": 10000,
+      "date": "2026-08-18",
+      "note": "bebi party",
+      "createdAt": 1786988211042
+    },
+    {
+      "id": "03a60592-ad23-4777-a5cd-c4005fc0d8c3",
+      "type": "expense",
+      "category": "Dining",
+      "amount": 1000,
+      "date": "2026-08-18",
+      "note": "",
+      "createdAt": 1786990365021
+    }
+  ],
+  "budgets": {
+    "Housing": 200000
+  },
+  "categories": {
+    "expense": [
+      "Housing",
+      "Groceries",
+      "Dining",
+      "Transport",
+      "Utilities",
+      "Health",
+      "Entertainment",
+      "Shopping",
+      "Education",
+      "Other",
+      "Dating"
+    ],
+    "income": [
+      "Salary",
+      "Freelance",
+      "Investments",
+      "Gifts",
+      "Refunds",
+      "Other"
+    ]
+  }
+}

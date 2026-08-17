@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="description" content="Ledger — a minimal personal finance tracker. No dependencies, your data in one JSON file.">
+<title>Ledger · Personal Finance Tracker</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%230f766e'/%3E%3Ccircle cx='11.5' cy='4.5' r='2' fill='%23f5f4f0'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="shell top">
+  <div class="brand"><span class="mark"></span>ledger<span class="tag">· personal finance</span></div>
+  <nav class="month" aria-label="Month navigation">
+    <button id="prevBtn" class="iconbtn nav" aria-label="Previous month">‹</button>
+    <strong id="monthLabel">—</strong>
+    <button id="nextBtn" class="iconbtn nav" aria-label="Next month">›</button>
+    <button id="todayBtn" class="todaybtn" hidden>Today</button>
+  </nav>
+  <div class="actions">
+    <button id="exportBtn" class="btn ghost" title="Download your ledger as data.json">Export</button>
+    <button id="importBtn" class="btn ghost" title="Load a ledger from a data.json file">Import</button>
+    <input type="file" id="fileInput" accept=".json,application/json" hidden>
+  </div>
+</header>
+
+<main class="shell">
+  <noscript><p class="noscript">This app needs JavaScript enabled.</p></noscript>
+
+  <!-- ============ transaction form ============ -->
+  <section class="card pad formcard" aria-labelledby="formTitle">
+    <h2 id="formTitle">Add transaction</h2>
+    <form id="txForm" novalidate>
+      <div class="seg" role="group" aria-label="Transaction type">
+        <button type="button" id="segExpense" class="segbtn active" data-type="expense" aria-pressed="true"><i class="tdot neg"></i>Expense</button>
+        <button type="button" id="segIncome" class="segbtn" data-type="income" aria-pressed="false"><i class="tdot pos"></i>Income</button>
+      </div>
+      <div class="formgrid">
+        <div class="field" id="fAmount">
+          <label for="amount">Amount</label>
+          <input id="amount" inputmode="decimal" autocomplete="off" placeholder="0.00">
+          <small class="err"></small>
+        </div>
+        <div class="field" id="fCategory">
+          <label for="catSelect">Category</label>
+          <select id="catSelect"></select>
+          <small class="err"></small>
+        </div>
+        <div class="field hidden" id="fNewCat">
+          <label for="newCat">New category</label>
+          <input id="newCat" maxlength="24" autocomplete="off" placeholder="e.g. Pets">
+          <small class="err"></small>
+        </div>
+        <div class="field" id="fDate">
+          <label for="date">Date</label>
+          <input type="date" id="date">
+          <small class="err"></small>
+        </div>
+        <div class="field grow" id="fNote">
+          <label for="note">Note <span class="opt">(optional)</span></label>
+          <input id="note" maxlength="60" autocomplete="off" placeholder="e.g. Groceries at the corner store">
+          <small class="err"></small>
+        </div>
+        <div class="fieldbtn">
+          <button type="submit" class="btn primary" id="submitBtn">Add</button>
+          <button type="button" class="btn ghost" id="cancelEdit" hidden>Cancel</button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <!-- ============ monthly summary ============ -->
+  <section aria-label="Monthly summary">
+    <div class="cards">
+      <div class="card stat"><span class="lbl">Income</span><div class="val" id="sumIncome">$0.00</div><div class="delta" id="dIncome"></div></div>
+      <div class="card stat"><span class="lbl">Expenses</span><div class="val" id="sumExpenses">$0.00</div><div class="delta" id="dExpenses"></div></div>
+      <div class="card stat"><span class="lbl">Net</span><div class="val" id="sumNet">$0.00</div><div class="delta"><span class="flat" id="netSub"></span></div></div>
+      <div class="card stat"><span class="lbl">Savings rate</span><div class="val" id="sumRate">—</div><div class="delta"><span class="flat">of income kept</span></div></div>
+    </div>
+  </section>
+
+  <!-- ============ budgets ============ -->
+  <section class="card pad budgetsec" aria-label="Monthly budgets">
+    <h3>Budgets</h3>
+    <p class="subline" id="budgetSub">—</p>
+    <ul class="bgrid" id="budgetList"></ul>
+  </section>
+
+  <!-- ============ charts ============ -->
+  <section class="charts" aria-label="Charts">
+    <div class="card pad chartcard">
+      <h3>Spending by category</h3>
+      <p class="subline" id="donutSub">—</p>
+      <div class="donutwrap">
+        <div class="donutbox"><canvas id="donutCanvas"></canvas></div>
+        <ul class="legend" id="legend"></ul>
+      </div>
+    </div>
+    <div class="card pad chartcard">
+      <h3>Income vs expenses</h3>
+      <p class="subline">last 6 months</p>
+      <div class="trendlegend"><span><i style="background:#0f766e"></i>Income</span><span><i style="background:#dc2626"></i>Expenses</span></div>
+      <canvas id="trendCanvas"></canvas>
+    </div>
+  </section>
+
+  <!-- ============ transactions list ============ -->
+  <section class="card pad listcard" aria-label="Transactions">
+    <div class="listhead">
+      <h3>Transactions</h3>
+      <div class="toolbar">
+        <div class="search">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="q" placeholder="Search note, category, amount… ( / )" aria-label="Search transactions">
+        </div>
+        <select id="fType" aria-label="Filter by type">
+          <option value="all">All types</option>
+          <option value="income">Income</option>
+          <option value="expense">Expenses</option>
+        </select>
+        <select id="fCat" aria-label="Filter by category"></select>
+        <select id="fScope" aria-label="Date scope">
+          <option value="month">This month</option>
+          <option value="all">All time</option>
+        </select>
+        <select id="fSort" aria-label="Sort order">
+          <option value="date-desc">Newest first</option>
+          <option value="date-asc">Oldest first</option>
+          <option value="amount-desc">Highest amount</option>
+          <option value="amount-asc">Lowest amount</option>
+        </select>
+      </div>
+    </div>
+    <div id="rowList" class="rowlist"></div>
+    <div class="listfoot">
+      <span id="countLabel"></span>
+      <div class="pager" id="pager">
+        <button id="pagePrev" class="iconbtn" aria-label="Previous page">‹</button>
+        <span id="pageInfo"></span>
+        <button id="pageNext" class="iconbtn" aria-label="Next page">›</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="shell foot">
+  <span class="mode" id="modeWrap"><i id="modeDot"></i><span id="modeText">connecting…</span></span>
+  <span class="sep">•</span>
+  <button id="sampleBtn" class="linkbtn hidden">Load sample data</button>
+  <span id="clearWrap" class="hidden"><span class="sep">•</span><button id="clearBtn" class="linkbtn danger">Clear all</button></span>
+</footer>
+
+<div id="toasts" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>
