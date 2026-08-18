@@ -277,6 +277,10 @@ function renderBudgets() {
     return;
   }
 
+  if (esc(cat) === 'Other') {
+    return; // ignore "Other" category in the budget list
+  }
+
   // 3. Generate the HTML for each category row
   const rows = allRelevantCats.map(cat => {
     const hasBudget = Object.prototype.hasOwnProperty.call(data.budgets, cat);
