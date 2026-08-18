@@ -254,65 +254,74 @@ function renderSummary(){
   els.netSub.textContent = n + (n === 1 ? ' transaction' : ' transactions');
 }
 
-function renderBudgets(){
+function renderBudgets() {
   const spent = {};
-  // Calculate current month's spending per category
+  // 1. Calculate actual spending for each category this month
   for (const t of data.transactions) {
-    if (t.type === 'expense' && t.date.slice(0,7) === viewMonth) {
+    if (t.type === 'expense' && t.date.slice(0, 7) === viewMonth) {
       spent[t.category] = (spent[t.category] || 0) + t.amount;
     }
   }
 
-  // Get a unique list of all relevant categories:
-  // Those with spending this month OR those that already have an active budget cap
+  // 2. Identify all categories that should appear in the list:
+  // - Any category with spending this month
+  // - OR any category that already has a budget cap set
   const usedCats = Object.keys(spent);
   const budgetCats = Object.keys(data.budgets);
   const allRelevantCats = Array.from(new Set([...usedCats, ...budgetCats])).sort((a, b) => a.localeCompare(b));
 
   els.budgetSub.textContent = 'Monthly spending caps for ' + monthLabel(viewMonth).toLowerCase() + ' · click a number to set or change';
 
-  if (allRelevantCats.length === 0){
-    const html = '<li class="lempty" style="padding:10px 0;color:var(--sub)">No expense spending in this month yet. Add budgets after your first expenses.</li>';
-    els.budgetList.innerHTML = html;
+  if (allRelevantCats.length === 0) {
+    els.budgetList.innerHTML = `<li class="lempty" style="padding:10px 0;color:var(--sub)">No expense spending in this month yet. Add budgets after your first expenses.</li>`;
     return;
   }
 
+  // 3. Generate the HTML for each category row
   const rows = allRelevantCats.map(cat => {
-    // Check if a budget entry exists for this category
     const hasBudget = Object.prototype.hasOwnProperty.call(data.budgets, cat);
-    const amt = data.budgets[cat]; 
-    const s = spent[cat] || 0;
+    const amtCents = data.budgets[cat] || 0; // The limit set by user
+    const spentCents = spent[cat] || 0;      // Actual spending this month
 
     if (!hasBudget) {
-      // CASE: Category has spending this month but no budget cap set yet
+      // CASE: Category has spending but NO budget cap is set yet
       return `<li class="brow" data-cat="">
         <div class="btop"><span class="bname"></span><button type="button" class="bin" title="Set budget">—</button></div>
         <div class="bbottom"><span> spent</span><span class="bstatus">no cap</span></div>
       </li>`;
     }
 
-    // CASE: Category has a defined budget limit
-    const pct = amt > 0 ? s / amt : (s > 0 ? 1.3 : 0);
+    // CASE: Category has a defined budget limit set
+    const pct = amtCents > 0 ? spentCents / amtCents : (spentCents > 0 ? 1.3 : 0);
     const cls = pct >= 1 ? 'bad' : pct >= .8 ? '' : 'good';
-    let word;
+    let statusWord;
 
-    if (amt === 0) {
-      word = s > 0 ? "over limit" : "no cap";
+    if (amtCents === 0) {
+      statusWord = spentCents > 0 ? "over limit" : "no cap";
     } else {
-      word = pct >= 1 
-        ? Math.round((pct - 1) * 100) + '% over' 
-        : (amt - s < amt * .02 && s > 0) ? 'on track' : Math.max(0, Math.round((1 - pct) * 100)) + '% left';
+      const diffPct = Math.round((1 - pct) * 100);
+      if (pct >= 1) {
+        statusWord = Math.round((pct - 1) * 100) + '% over';
+      } else if (spentCents > 0 && diffPct < 2) {
+        statusWord = 'on track';
+      } else {
+        statusWord = diffPct + '% left';
+      }
     }
 
     return `<li class="brow" data-cat="">
       <div class="btop"><span class="bname"></span><button type="button" class="bin" title="Edit budget"></button></div>
-      <div class="bbar"><i style="width:%;background:"></i></div>
+      <div class="bbar"><i style="width:%; background:"></i></div>
       <div class="bbottom"><span> of</span><span class="bstatus ${cls}"></span></div>
     </li>`;
   }).join('');
 
   els.budgetList.innerHTML = rows;
-  $$('.bin', els.budgetList).forEach(b => b.onclick = () => setBudget(b.closest('.brow').dataset.cat));
+
+  // 4. Re-attach click events to the new buttons
+  $$('.bin', els.budgetList).forEach(btn => {
+    btn.onclick = () => setBudget(btn.closest('.brow').dataset.cat);
+  });
 }
 
 function setBudget(cat){
