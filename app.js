@@ -256,30 +256,61 @@ function renderSummary(){
 
 function renderBudgets(){
   const spent = {};
-  for (const t of data.transactions) if (t.type === 'expense' && t.date.slice(0,7) === viewMonth) spent[t.category] = (spent[t.category] || 0) + t.amount;
-  const budgets = Object.entries(data.budgets).sort((a,b) => a[0].localeCompare(b[0]));
+  // Calculate current month's spending per category
+  for (const t of data.transactions) {
+    if (t.type === 'expense' && t.date.slice(0,7) === viewMonth) {
+      spent[t.category] = (spent[t.category] || 0) + t.amount;
+    }
+  }
+
+  // Get a unique list of all relevant categories:
+  // Those with spending this month OR those that already have an active budget cap
+  const usedCats = Object.keys(spent);
+  const budgetCats = Object.keys(data.budgets);
+  const allRelevantCats = Array.from(new Set([...usedCats, ...budgetCats])).sort((a, b) => a.localeCompare(b));
+
   els.budgetSub.textContent = 'Monthly spending caps for ' + monthLabel(viewMonth).toLowerCase() + ' · click a number to set or change';
 
-  if (!budgets.length){
-    const usedCats = Object.keys(spent).sort();
-    const html = usedCats.slice(0,4).map(c =>
-      `<li class="brow" data-cat="${esc(c)}"><div class="btop"><span class="bname">${esc(c)}</span><button type="button" class="bin" title="Set budget">—</button></div><div class="bbottom"><span>${money(spent[c]/100)} spent</span><span class="bstatus">no cap</span></div></li>`).join('')
-      || '<li class="lempty" style="padding:10px 0;color:var(--sub)">No expense spending in this month yet. Add budgets after your first expenses.</li>';
+  if (allRelevantCats.length === 0){
+    const html = '<li class="lempty" style="padding:10px 0;color:var(--sub)">No expense spending in this month yet. Add budgets after your first expenses.</li>';
     els.budgetList.innerHTML = html;
-    $$('.bin', els.budgetList).forEach(b => b.onclick = () => setBudget(b.closest('.brow').dataset.cat));
     return;
   }
 
-  const rows = budgets.map(([cat, amt]) => {
-    const s = spent[cat] || 0, pct = amt > 0 ? s / amt : (s > 0 ? 1.3 : 0);
+  const rows = allRelevantCats.map(cat => {
+    // Check if a budget entry exists for this category
+    const hasBudget = Object.prototype.hasOwnProperty.call(data.budgets, cat);
+    const amt = data.budgets[cat]; 
+    const s = spent[cat] || 0;
+
+    if (!hasBudget) {
+      // CASE: Category has spending this month but no budget cap set yet
+      return `<li class="brow" data-cat="">
+        <div class="btop"><span class="bname"></span><button type="button" class="bin" title="Set budget">—</button></div>
+        <div class="bbottom"><span> spent</span><span class="bstatus">no cap</span></div>
+      </li>`;
+    }
+
+    // CASE: Category has a defined budget limit
+    const pct = amt > 0 ? s / amt : (s > 0 ? 1.3 : 0);
     const cls = pct >= 1 ? 'bad' : pct >= .8 ? '' : 'good';
-    const word = pct >= 1 ? Math.round((pct - 1) * 100) + '% over' : (amt - s < amt * .02 && s > 0) ? 'on track' : Math.max(0, Math.round((1 - pct) * 100)) + '% left';
-    return `<li class="brow" data-cat="${esc(cat)}">
-      <div class="btop"><span class="bname">${esc(cat)}</span><button type="button" class="bin" title="Edit budget">${money(amt/100)}</button></div>
-      <div class="bbar"><i style="width:${Math.min(pct,1)*100}%;background:${pct >= 1 ? '#dc2626' : pct >= .8 ? '#d97706' : '#0f766e'}"></i></div>
-      <div class="bbottom"><span>${money(s/100)} of ${money(amt/100)}</span><span class="bstatus ${cls}">${word}</span></div>
+    let word;
+
+    if (amt === 0) {
+      word = s > 0 ? "over limit" : "no cap";
+    } else {
+      word = pct >= 1 
+        ? Math.round((pct - 1) * 100) + '% over' 
+        : (amt - s < amt * .02 && s > 0) ? 'on track' : Math.max(0, Math.round((1 - pct) * 100)) + '% left';
+    }
+
+    return `<li class="brow" data-cat="">
+      <div class="btop"><span class="bname"></span><button type="button" class="bin" title="Edit budget"></button></div>
+      <div class="bbar"><i style="width:%;background:"></i></div>
+      <div class="bbottom"><span> of</span><span class="bstatus ${cls}"></span></div>
     </li>`;
   }).join('');
+
   els.budgetList.innerHTML = rows;
   $$('.bin', els.budgetList).forEach(b => b.onclick = () => setBudget(b.closest('.brow').dataset.cat));
 }
