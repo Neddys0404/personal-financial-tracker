@@ -287,7 +287,7 @@ function renderBudgets() {
       // CASE: Category has spending but NO budget cap is set yet
       return `<li class="brow" data-cat="${esc(cat)}">
         <div class="btop"><span class="bname">${esc(cat)}</span><button type="button" class="bin" title="Set budget">—</button></div>
-        <div class="bbottom"><span> spent</span><span class="bstatus">no cap</span></div>
+        <div class="bbottom"><span>${money(spentCents/100)} spent</span><span class="bstatus">no cap</span></div>
       </li>`;
     }
 
