@@ -277,17 +277,13 @@ function renderBudgets() {
     return;
   }
 
-  if (esc(cat) === 'Other') {
-    return; // ignore "Other" category in the budget list
-  }
-
   // 3. Generate the HTML for each category row
   const rows = allRelevantCats.map(cat => {
     const hasBudget = Object.prototype.hasOwnProperty.call(data.budgets, cat);
     const amtCents = data.budgets[cat] || 0; // The limit set by user
     const spentCents = spent[cat] || 0;      // Actual spending this month
 
-    if (!hasBudget) {
+    if (!hasBudget && esc(cat) !== 'Other') {
       // CASE: Category has spending but NO budget cap is set yet
       return `<li class="brow" data-cat="${esc(cat)}">
         <div class="btop"><span class="bname">${esc(cat)}</span><button type="button" class="bin" title="Set budget">—</button></div>
@@ -313,11 +309,13 @@ function renderBudgets() {
       }
     }
 
-    return `<li class="brow" data-cat="${esc(cat)}">
-      <div class="btop"><span class="bname">${esc(cat)}</span><button type="button" class="bin" title="Edit budget">${money(amtCents/100)}</button></div>
-      <div class="bbar"><i style="width:${Math.min(pct,1)*100}%; background:${pct >= 1 ? '#dc2626' : pct >= .8 ? '#d97706' : '#0f766e'}"></i></div>
-      <div class="bbottom"><span>${money(spentCents/100)} of ${money(amtCents/100)}</span><span class="bstatus ${cls}"></span></div>
-    </li>`;
+    if (esc(cat) !== 'Other') {
+      return `<li class="brow" data-cat="${esc(cat)}">
+        <div class="btop"><span class="bname">${esc(cat)}</span><button type="button" class="bin" title="Edit budget">${money(amtCents/100)}</button></div>
+        <div class="bbar"><i style="width:${Math.min(pct,1)*100}%; background:${pct >= 1 ? '#dc2626' : pct >= .8 ? '#d97706' : '#0f766e'}"></i></div>
+        <div class="bbottom"><span>${money(spentCents/100)} of ${money(amtCents/100)}</span><span class="bstatus ${cls}"></span></div>
+      </li>`;
+    }
   }).join('');
 
   els.budgetList.innerHTML = rows;
